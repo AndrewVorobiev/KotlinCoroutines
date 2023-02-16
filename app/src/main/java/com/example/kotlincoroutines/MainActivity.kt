@@ -9,6 +9,8 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.isVisible
 import androidx.lifecycle.lifecycleScope
 import com.example.kotlincoroutines.databinding.ActivityMainBinding
+import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.async
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -28,22 +30,28 @@ class MainActivity : AppCompatActivity() {
             // для этого надо использовать метод lifecycleScope.launch
             binding.progress.isVisible = true
             binding.buttonLoad.isEnabled = false
-            val jobCity = lifecycleScope.launch {
+            val deferredCity : Deferred<String> = lifecycleScope.async {
                 val city = loadCity()
                 binding.tvLocation.text = city
+                city
             }
-            val jobTemp = lifecycleScope.launch {
+            //
+            val deferredTemp : Deferred<Int> = lifecycleScope.async {
                 val temp = loadTemperature()
                 binding.tvTemperature.text = temp.toString()
+                temp
             }
             lifecycleScope.launch {
                 // метод join - остановит корутину до тех пор, пока эта работа не будет выполнена
-                jobCity.join()
-                jobTemp.join()
+                // метод await - сделает тоже самое, что и join,
+                // но при этом он вернет объект, который лежит в корутине
+                val city = deferredCity.await()
+                val temp = deferredTemp.await()
+                Toast.makeText(this@MainActivity,"City: $city, Temp: $temp", Toast.LENGTH_SHORT).show()
                 binding.progress.isVisible = false
                 binding.buttonLoad.isEnabled = true
             }
-//            loadWithoutCoroutine()
+
         }
     }
 
